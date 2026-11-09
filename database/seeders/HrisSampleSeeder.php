@@ -5,7 +5,9 @@ namespace Database\Seeders;
 use App\Models\Department;
 use App\Models\Employee;
 use App\Models\Position;
+use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class HrisSampleSeeder extends Seeder
 {
@@ -55,8 +57,17 @@ class HrisSampleSeeder extends Seeder
             'description' => 'Handles bookkeeping and expenses',
         ]);
 
-        // 3. Sample Manager Employee
+        // 3. Sample Manager Employee (Supervisor)
+        $managerUser = User::firstOrCreate(['email' => 'budi.santoso@hris.local'], [
+            'name' => 'Budi Santoso',
+            'password' => Hash::make('password'),
+        ]);
+        if (!$managerUser->hasRole('supervisor')) {
+            $managerUser->assignRole('supervisor');
+        }
+
         $manager = Employee::firstOrCreate(['employee_code' => 'EMP-001'], [
+            'user_id' => $managerUser->id,
             'department_id' => $it->id,
             'position_id' => $itLead->id,
             'first_name' => 'Budi',
@@ -70,9 +81,21 @@ class HrisSampleSeeder extends Seeder
             'status' => 'active',
             'address' => 'Jakarta Selatan, DKI Jakarta',
         ]);
+        if (!$manager->user_id) {
+            $manager->update(['user_id' => $managerUser->id]);
+        }
 
-        // 4. Sample Staff Employee reporting to Manager
-        Employee::firstOrCreate(['employee_code' => 'EMP-002'], [
+        // 4. Sample Staff Employee (Employee role)
+        $staffUser = User::firstOrCreate(['email' => 'siti.rahmawati@hris.local'], [
+            'name' => 'Siti Rahmawati',
+            'password' => Hash::make('password'),
+        ]);
+        if (!$staffUser->hasRole('employee')) {
+            $staffUser->assignRole('employee');
+        }
+
+        $staff = Employee::firstOrCreate(['employee_code' => 'EMP-002'], [
+            'user_id' => $staffUser->id,
             'department_id' => $it->id,
             'position_id' => $softDev->id,
             'manager_id' => $manager->id,
@@ -87,9 +110,21 @@ class HrisSampleSeeder extends Seeder
             'status' => 'active',
             'address' => 'Tangerang, Banten',
         ]);
+        if (!$staff->user_id) {
+            $staff->update(['user_id' => $staffUser->id]);
+        }
 
-        // 5. HR Employee
-        Employee::firstOrCreate(['employee_code' => 'EMP-003'], [
+        // 5. HR Employee (HR Manager role)
+        $hrUser = User::firstOrCreate(['email' => 'dewi.lestari@hris.local'], [
+            'name' => 'Dewi Lestari',
+            'password' => Hash::make('password'),
+        ]);
+        if (!$hrUser->hasRole('hr_manager')) {
+            $hrUser->assignRole('hr_manager');
+        }
+
+        $hrEmp = Employee::firstOrCreate(['employee_code' => 'EMP-003'], [
+            'user_id' => $hrUser->id,
             'department_id' => $hr->id,
             'position_id' => $hrMgr->id,
             'first_name' => 'Dewi',
@@ -103,5 +138,8 @@ class HrisSampleSeeder extends Seeder
             'status' => 'active',
             'address' => 'Jakarta Pusat, DKI Jakarta',
         ]);
+        if (!$hrEmp->user_id) {
+            $hrEmp->update(['user_id' => $hrUser->id]);
+        }
     }
 }
